@@ -1,0 +1,452 @@
+//header
+
+options{
+STATIC=false;
+}
+PARSER_BEGIN(Parser)
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+public class Parser {
+	//initialze needed arrays
+	static char[] first = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+					'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z' };
+	static int[] position = new int[52];
+	static char[] symbol = new char[10000];
+	static int[] next = new int[10000];
+	static int zz = 0;
+	static BufferedWriter writer;
+
+//fill the arrays with the needed information
+static void fillPost()
+{
+	for(int i = 0; i<position.length;i++)
+		{
+			position[i]=-1;
+		}
+	for (int i = 0;i<symbol.length;i++)
+	{
+		symbol[i]=' ';
+	}
+
+}
+//insert function
+static void insert(String key) {
+
+	char letter = key.charAt(0); // get the first letter (check)
+	int place = 0;
+	for (int j=0; j<52;j++)		//find the spot the letter is in the trie
+	{
+		if (letter == first[j]) // find the Letter in the array
+		{
+			place = j;			//saves the letter spot
+		}
+	}
+
+
+	if (position[place]!=-1) //if spot is taken
+	{
+		int newSpot = position[place];			//find next spot
+		while(symbol[newSpot]!=' ')
+		{
+			newSpot++;							
+		}
+		int nnext = newSpot;
+		for (int i=1;i<key.length();i++)        //once spot is found insert element
+		{
+			symbol[newSpot]=key.charAt(i);	
+			newSpot++;
+		}
+		symbol[newSpot]='@';					//place termial symbol
+		zz=newSpot+1;
+		next[nnext] = newSpot;
+	}
+
+	if (position[place]==-1) //if spot is empty
+	{
+	  position[place] = zz;
+	  int nnext = zz;
+		for (int i = 1;i<key.length();i++ ) //place key at next open spot
+		{
+			symbol[zz] = key.charAt(i);
+			zz=zz+1;
+		}
+			symbol[zz]='@';
+			zz=zz+1;
+			next[nnext] = zz;
+	}
+  }
+
+static boolean search(String key)
+{
+	char letter = key.charAt(0); // get the first letter (check)
+	int place = 0;
+	for (int j=0; j<52;j++)		//find the spot the letter is in the trie
+	{
+		if (letter == first[j]) // find the Letter in the array
+		{
+			place = j;
+		}
+	}
+
+	int find = position[place];					// finds if element is filled
+	if (find==-1){return false;}				//if empty false
+	for(int i = 1;i<key.length();i++)			//if not emtpy continue 
+	{
+	  if(find>symbol.length-1){break;}			// look through array for key
+		if(symbol[find]!=key.charAt(i)) {i=1;}
+		find=find+1;
+	}
+	if(find >9999) {find=9999;}
+	if(symbol[find]=='@') {return true;}		//if found return true
+	else return false;
+
+}
+// print method for trie
+static void printTrie()
+	{
+		for (int i =0; i<26;i++)
+		{
+			System.out.print("   " + first[i]);
+		}
+
+System.out.println();
+
+		for (int i =0; i<26;i++)
+		{
+			System.out.print(String.format("%4d",position[i]));
+		}
+System.out.println();
+		for (int i =26; i<52;i++)
+		{
+			System.out.print("   " + first[i]);
+		}
+
+System.out.println();
+
+		for (int i =26; i<52;i++)
+		{
+			System.out.print(String.format("%4d",position[i]));
+		}
+
+
+
+System.out.println();
+System.out.println();
+		for (int i = 0; i<zz;i++)
+		{ 
+			System.out.print(String.format("%4d",i));
+
+		}
+System.out.println();
+		for (int i = 0; i<zz;i++)
+		{
+			System.out.print("   " + symbol[i]);
+		}
+System.out.println();
+		for (int i = 0; i<zz;i++)
+		{
+			System.out.print(String.format("%4d",next[i]));
+		}
+		
+    }
+
+
+       public static void main(String[] args) throws ParseException, TokenMgrError, FileNotFoundException, UnsupportedEncodingException {
+ 		writer = new BufferedWriter(new FileWriter(fileName));
+
+     	Parser parser = new Parser(System.in);
+		fillPost();
+		ArrayList<String> list = new ArrayList<String>();
+     	parser.start();
+     	writer.close();
+    }  
+}
+
+PARSER_END(Parser)
+
+//tokens
+
+SKIP : {
+ " "
+|  < "//" (~["\r", "\n"])* >
+| < "/*" > : ML_COMMENT_STATE
+|  "\t"
+|  "\n"
+|  "\r"
+}
+
+<ML_COMMENT_STATE> SKIP :
+{
+  < "*/" > : DEFAULT
+| < ~[] >   
+}
+TOKEN: {<DBLCONST: (["0"-"9"])+["."](["0"-"9"])+>  }
+TOKEN: {<INTCONST: (["0"-"9"])+ >  }
+TOKEN: {<ADDOP : "+">}
+TOKEN: {<MULOP : "*">}
+TOKEN: {<SUBOP: "-">}
+TOKEN: {<SEMICOL: ";">}
+TOKEN: {<COMMA: ",">}
+TOKEN: {<BOOLN: "boolean">}
+TOKEN: {<ELS: "else">}
+TOKEN: {<IMPL: "implements">}
+TOKEN: {<NEWAR: "newarray">}
+TOKEN: {<RTRN: "return">}
+TOKEN: {<MOD: "%">}
+TOKEN: {<GRTEQ: ">=">}
+TOKEN: {<LESSEQ: "<=">}
+TOKEN: {<GRT: ">">}
+TOKEN: {<AND: "&">}
+TOKEN: {<RTBRC: "]">}
+TOKEN: {<RTPRN: ")">}
+TOKEN: {<BOOLCONST: ("true" | "false")>}
+TOKEN: {<_INT: "int">}
+TOKEN: {<DOT: ".">}
+TOKEN: {<LFTBRACKET: "[">}
+TOKEN: {<OR: "|">}
+TOKEN: {<BRK: "break">}
+TOKEN: {<EXTNDS: "extends">}
+TOKEN: {<NUL: "null">}
+TOKEN: {<STRNG: "string">}
+TOKEN :{<STRINGCONST : "\""  (~["\n","\r"])*  "\"">}
+TOKEN: {<LESS: "<">}
+TOKEN: {<NEQ: "!=">}
+TOKEN: {<EQL: "==">}
+TOKEN: {<ASSIGN: "=">}
+TOKEN: {<LFTPRN: "(">}
+TOKEN: {<LFTBRACE: "{">}
+TOKEN: {<RTBRACE: "}">}
+TOKEN: {<_IF: "if">}
+TOKEN: {<NW: "new">}
+TOKEN: {<READLN: "readln">}
+TOKEN: {<_WHLE: "while">}
+TOKEN: {<DIV: "/">}
+TOKEN: {<NOT: "!">}
+TOKEN: {<DBL: "double">} 
+TOKEN: {<CLS: "class">}
+TOKEN: {<FR: "for">}
+TOKEN: {<INTRFC: "interface">}
+TOKEN: {<PRNTLN: "println">}
+TOKEN: {<_VOID: "void">}
+TOKEN: {< kill: "#" >}
+TOKEN : {
+ <ID: <LETTER>(<LETTER>|<INTCONST>)*(["$"])?>
+|  <#LETTER: (["a"-"z","A"-"Z"])>
+}
+
+//grammar
+void start():
+	{
+		Token t;
+	}
+	{
+	  (<DBLCONST>{
+		if(search("doubleconst")!=true) {insert("doubleconst");}
+	    writer.println("doubleconst ");}
+	  |
+	  (<INTCONST>{
+		if(search("intconst")!=true) {insert("intconst");}
+	    writer.print("intconst ");}) 
+	  |
+	  (<ADDOP>{
+		if(search("add")!=true) {insert("add");}
+	    writer.print("add ");} )
+	  |
+	  <MULOP>{
+		if(search("multiplication")!=true) {insert("multiplication");}
+	    writer.print("multiplication ");}
+	  | 
+	  <SUBOP>{
+		if(search("minus")!=true) {insert("minus");}
+	    writer.print("minus ");}
+	  |
+	  <SEMICOL>{
+		if(search("semicol")!=true) {insert("semicol");}
+	    writer.print("semicol ");}
+	  |
+	  <COMMA>{
+		if(search("comma")!=true) {insert("comma");}
+	    writer.print("comma ");}	  
+	  |
+	  <BOOLN>{
+		if(search("boolean")!=true) {insert("boolean");}
+	    writer.print("boolean ");}
+	  |
+	  <ELS>{
+		if(search("else")!=true) {insert("else");}
+	    writer.print("else ");}
+	  |
+	  <IMPL>{
+		if(search("implements")!=true) {insert("implements");}
+	    writer.print("implements ");}
+	  |
+	  <NEWAR>{
+		if(search("newarray")!=true) {insert("newarray");}
+	    writer.print("newarray ");}
+	  |
+	  <RTRN>{
+		if(search("return")!=true) {insert("return");}
+	    writer.print("return ");}
+	  |
+	  <MOD>{
+		if(search("mod")!=true) {insert("mod");}
+	    writer.print("mod ");}
+	  |
+	  <GRTEQ>{
+		if(search("greaterequal")!=true) {insert("greaterequal");}
+	    writer.print("greaterequal ");}
+	  |
+	  <LESSEQ>{
+		if(search("lessequal")!=true) {insert("lessequal");}
+	    writer.print("lessequal ");}
+	  |
+	  <GRT>{
+		if(search("greaterthan")!=true) {insert("greaterthan");}
+	    writer.print("greaterthan ");}
+	  |
+	  <AND>{
+		if(search("and")!=true) {insert("and");}
+	    writer.print("and ");}
+	  |
+	  <RTBRC>{
+		if(search("rightbracket")!=true) {insert("rightbracket");}
+	    writer.print("rightbracket ");}
+	  |
+	  <RTPRN>{
+		if(search("rightparen")!=true) {insert("rightparen");}
+	    writer.print("rightparen ");}
+	  |
+	  <BOOLCONST>{
+		if(search("booleanconst")!=true) {insert("booleanconst");}
+	    writer.print("booleanconst ");}
+	  |
+	  <_INT>{
+		if(search("int")!=true) {insert("int");}
+	    writer.print("int ");}
+	  |
+	  <DOT>{
+		if(search("period")!=true) {insert("period");}
+	    writer.print("period ");}
+	  |
+	  <LFTBRACKET>{
+		if(search("leftbracket")!=true) {insert("leftbracket");}
+	    writer.print("leftbracket ");}
+	  |
+	  <OR>{
+		if(search("or")!=true) {insert("or");insert("or");}
+	    writer.print("or ");}
+	  |
+	  <BRK>{
+		if(search("break")!=true) {insert("break");}
+	    writer.print("break ");}
+	  |
+	  <EXTNDS>{
+		if(search("extends")!=true) {insert("extends");}
+	    writer.print("extends ");}
+	  |
+	  <NUL>{
+		if(search("null")!=true) {insert("null");}
+	    writer.print("null ");}
+	  |
+	  <STRNG>{
+		if(search("string")!=true) {insert("string");}
+	    writer.print("string ");}
+	  |
+	  <STRINGCONST>{
+		if(search("stringconst")!=true) {insert("stringconst");}
+	    writer.print("stringconst ");}
+	  |
+	  <LESS>{
+		if(search("less")!=true) {insert("less");}
+	    writer.print("less ");}
+	  |
+	  <NEQ>{
+		if(search("notequal")!=true) {insert("notequal");}
+	    writer.print("notequal ");}
+	  |
+	  <EQL>{
+		if(search("equal")!=true) {insert("equal");}
+	    writer.print("equal ");}
+	  |
+	  <ASSIGN>{
+		if(search("assign")!=true) {insert("assign");}
+	    writer.print("assign ");}
+	  |
+	  <LFTPRN>{
+		if(search("leftparn")!=true) {insert("leftparn");}
+	    writer.print("leftparen ");}
+	  |
+	  <LFTBRACE>{
+		if(search("leftbrace")!=true) {insert("leftbrace");}
+	    writer.print("leftbrace ");}
+	  |
+	  <RTBRACE>{
+		if(search("rightbrace")!=true) {insert("rightbrace");}
+	    writer.print("rightbrace ");}
+	  |
+	  <_IF>{
+		if(search("if")!=true) {insert("if");}
+	    writer.print("if ");}
+	  |
+	  <NW>{
+		if(search("new")!=true) {insert("new");}
+	    writer.print("new ");}
+	  |
+	  <READLN>{
+		if(search("readline")!=true) {insert("readline");}
+	    writer.print("readline ");}
+	  |
+	  <_WHLE>{
+		if(search("while")!=true) {insert("while");}
+	    writer.print("while ");}
+	  |
+	  <DIV>{
+		if(search("divide")!=true) {insert("divide");}
+	    writer.print("divide ");}
+	  |
+	  <NOT>{
+		if(search("not")!=true) {insert("not");}
+	    writer.print("not ");}
+	  |
+	  <DBL>{
+		if(search("double")!=true) {insert("double");}
+	    writer.print("double ");}
+	  |
+	  <CLS>{
+		if(search("class")!=true) {insert("class");}
+	    writer.print("class ");}
+	  |
+	  <FR>{
+		if(search("for")!=true) {insert("for");}
+	    writer.print("for ");}
+	  |
+	  <INTRFC>{
+		if(search("interface")!=true) {insert("interface");}
+	    writer.print("inteface ");}
+	  |
+	  <PRNTLN>{
+		if(search("println")!=true) {insert("println");}
+	    writer.print("println ");}
+	  |
+	  <_VOID>{
+		if(search("void")!=true) {insert("void");}
+	    writer.print("void ");}
+	    |
+	  <kill>{
+	    printTrie();}
+	  |
+	  t = <ID>{
+		if(search(t.toString())!=true) {insert(t.toString());}
+	    writer.print("id ");}
+	  )*
+	  <EOF>{writer.println();}
+	}
+
+  
+
+	
+	
+	
